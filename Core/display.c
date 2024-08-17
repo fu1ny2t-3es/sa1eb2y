@@ -1947,15 +1947,10 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                 while (gb->n_visible_objs != 0 &&
                        (gb->io_registers[GB_IO_LCDC] & GB_LCDC_OBJ_EN || GB_is_cgb(gb)) &&
                        gb->objects_x[gb->n_visible_objs - 1] == x_for_object_match(gb)) {
-<<<<<<< HEAD
-                    
-                    while (gb->fetcher_state < GB_FETCHER_GET_TILE_DATA_HIGH_T2 || fifo_size(&gb->bg_fifo) == 0) {
-=======
                     extern int retro_sprite_overclock;
                     int oam_penalty;
 
-                    while (gb->fetcher_state < 5 || fifo_size(&gb->bg_fifo) == 0) {
->>>>>>> 4878ec1 (Update apu.c)
+                    while (gb->fetcher_state < GB_FETCHER_GET_TILE_DATA_HIGH_T2 || fifo_size(&gb->bg_fifo) == 0) {
                         advance_fetcher_state_machine(gb, &cycles);
                         oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
                         if (oam_penalty) {
