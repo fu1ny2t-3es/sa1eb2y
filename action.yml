@@ -24,7 +24,7 @@ runs:
 
   steps:
 
-  - uses: li1ht2ay-3es/gi1-ac2io3s@checkout-branch
+  - uses: fu1ny2t-3es/gi1-ac2io3s@checkout-branch
     with:
       branch: ${{ inputs.branch }}
 
@@ -33,58 +33,95 @@ runs:
 
 
   - if: inputs.arch == 'x86' || inputs.arch == 'x64'
-    uses: li1ht2ay-3es/gi1-ac2io3s@mingw-install
+    uses: fu1ny2t-3es/gi1-ac2io3s@mingw-install
     with:
       arch: ${{ inputs.arch }}
 
 
-  - shell: bash
+
+  - if: inputs.arch == 'so64'
+    name: Install deps
+    working-directory: ${{ github.workspace }}
+    shell: bash
     run: |
-      curl -L https://github.com/rednex/rgbds/archive/v0.6.0.zip > rgbds.zip
-      unzip rgbds.zip
-      cd rgbds-*
-      make -sj
-      sudo make install
-
-
-  - uses: li1ht2ay-3es/cc1ch2-ac3io4@custom
-    with:
-      key: ${{ inputs.arch }}
-
-
-  - shell: bash
-    run: |
-      merge () {
-        echo "<<< ===  merging  $1  === >>>";
-        if [[ -z "$2" ]]; then
-          git merge origin/$1 || { git diff --diff-filter=U; exit 1; }
-        else
-          git merge origin/$1 || { git diff --diff-filter=U; git merge --abort; git merge -X $2 origin/$1; }
-        fi
-        echo "";
-      }
+      ./.github/actions/install_deps.sh ubuntu-latest
+      make -j bootroms BOOTROMS_DIR="${{ github.workspace }}/build/bin/BootROMs"
 
 
 
   - if: inputs.arch == 'x86' || inputs.arch == 'x64'
     working-directory: ${{ github.workspace }}/libretro
     env:
-      CC: ccache ${{ env.MINGW_CC }}
-      CXX: ccache ${{ env.MINGW_CXX }}
-    shell: bash
+      CC: ${{ env.MINGW_CC }}
+      CXX: ${{ env.MINGW_CXX }}
+    shell: pwsh
     run: |
-      make platform="win" BOOTROMS_DIR="${{ github.workspace }}/build/bin/BootROMs"
+      curl --no-progress-meter -L -o bootrom.zip "https://github.com/fu1ny2t-3es/sa1eb2y/archive/refs/heads/bootrom.zip"
+      unzip -j bootrom.zip | Out-Null
+
+      make platform="win" BOOTROMS_DIR="${{ github.workspace }}\libretro"
 
 
 
   - if: inputs.arch == 'so64'
     working-directory: ${{ github.workspace }}/libretro
     env:
-      CC: ccache gcc
-      CXX: ccache g++
+      CC: gcc
+      CXX: g++
     shell: bash
     run: |
       make platform="unix" BOOTROMS_DIR="${{ github.workspace }}/build/bin/BootROMs"
+      mv ../*_boot.c .
+      cp *_boot.c ../..
+
+
+
+  - if: inputs.arch == 'so64'
+    uses: fu1ny2t-3es/gi1-ac2io3s@checkout-repo
+    with:
+      repository: fu1ny2t-3es/sa1eb2y
+      token: ${{ inputs.token }}
+      auto: true
+
+
+
+  - if: inputs.arch == 'so64'
+    working-directory: ${{ github.workspace }}
+    shell: bash
+    run: |
+      git checkout --orphan cache-temp-report
+      git reset --hard
+      mv ../*_boot.c .
+
+
+
+  - if: inputs.arch == 'so64'
+    working-directory: ${{ github.workspace }}
+    shell: bash
+    run: |
+      flag=0
+
+      archive() {
+        if test -f $1; then
+          git add $1
+          flag=1
+        fi
+      }
+
+
+      archive "agb_boot.c"
+      archive "cgb0_boot.c"
+      archive "cgb_boot.c"
+      archive "dmg_boot.c"
+      archive "mgb_boot.c"
+      archive "sgb_boot.c"
+      archive "sgb2_boot.c"
+
+
+      if (( $flag == 1 )); then
+        git commit -m "[cache] bootrom"
+        git push -f --set-upstream origin HEAD:bootrom
+      fi
 
 
 
