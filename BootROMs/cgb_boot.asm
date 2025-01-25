@@ -49,6 +49,7 @@ ENDC
     ld a, %11_11_11_00
     ldh [rBGP], a
 
+IF !DEF(FAST)
 ; Load logo from ROM.
 ; A nibble represents a 4-pixels line, 2 bytes represent a 4x4 tile, scaled to 8x8.
 ; Tiles are ordered left to right, top to bottom.
@@ -66,6 +67,7 @@ ENDC
     cp LOW(NintendoLogoEnd)
     jr nz, .loadLogoLoop
     call ReadTrademarkSymbol
+ENDC
 
 ; Clear the second VRAM bank
     ld a, 1
@@ -211,13 +213,13 @@ IF !DEF(FAST)
     jr nz, .waitLoop
 ELSE
     ld a, $C1
-    call PlaySound
+    ;call PlaySound
 ENDC
     call Preboot
 IF DEF(AGB)
     inc b
 ENDC
-    jr BootGame
+    jp BootGame
 
 HDMAData:
 MACRO hdma_data ; source, destination, length
@@ -882,10 +884,12 @@ ENDC
     ; Clear RAM Bank 2 (Like the original boot ROM)
     ld hl, _RAMBANK
     call ClearMemoryPage
+IF !DEF(FAST)
     inc a
     call ClearVRAMViaHDMA
     call _ClearVRAMViaHDMA
     call ClearVRAMViaHDMA ; A = $40, so it's bank 0
+ENDC
     xor a
     ldh [rSVBK], a
     cpl

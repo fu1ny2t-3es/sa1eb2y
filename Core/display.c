@@ -5,6 +5,7 @@
 #include <math.h>
 #include "gb.h"
 
+<<<<<<< HEAD
 const GB_palette_t GB_PALETTE_GREY = {{{0x00, 0x00, 0x00}, {0x55, 0x55, 0x55}, {0xAA, 0xAA, 0xAA}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}}};
 const GB_palette_t GB_PALETTE_DMG  = {{{0x08, 0x18, 0x10}, {0x39, 0x61, 0x39}, {0x84, 0xA5, 0x63}, {0xC6, 0xDE, 0x8C}, {0xD2, 0xE6, 0xA6}}};
 const GB_palette_t GB_PALETTE_MGB  = {{{0x07, 0x10, 0x0E}, {0x3A, 0x4C, 0x3A}, {0x81, 0x8D, 0x66}, {0xC2, 0xCE, 0x93}, {0xCF, 0xDA, 0xAC}}};
@@ -62,6 +63,9 @@ void GB_set_rgb_encode_callback(GB_gameboy_t *gb, GB_rgb_encode_callback_t callb
         GB_palette_changed(gb, false, i * 2);
     }
 }
+=======
+extern void retro_set_overclock(int);
+>>>>>>> fb561ba (Update apu.c)
 
 void GB_set_pixels_output(GB_gameboy_t *gb, uint32_t *output)
 {
@@ -594,8 +598,14 @@ static void add_object_from_index(GB_gameboy_t *gb, unsigned index)
         gb->mode2_x_bus = oam_read(gb, index * 4 + 1);
     }
 
+<<<<<<< HEAD
     if (unlikely(gb->n_visible_objs == 10)) return;
     
+=======
+    extern int retro_sprite_limit;
+    if (gb->n_visible_objs == retro_sprite_limit) return;
+
+>>>>>>> ee3c435 (Update a.yml)
     /* TODO: It appears that DMA blocks PPU access to OAM, but it needs verification. */
     if (unlikely(GB_is_dma_active(gb) && (gb->halted || gb->stopped))) {
         if (gb->model < GB_MODEL_CGB_E) {
@@ -999,7 +1009,7 @@ static void advance_fetcher_state_machine(GB_gameboy_t *gb, unsigned *cycles)
             GB_update_wx_glitch(gb);
 
             uint16_t tile_address = 0;
-            uint8_t y = gb->model > GB_MODEL_CGB_C ? gb->fetcher_y : fetcher_y(gb);
+            uint8_t y = (gb->model > GB_MODEL_CGB_C) ? gb->fetcher_y : fetcher_y(gb);
             
             gb->last_tileset = gb->io_registers[GB_IO_LCDC] & GB_LCDC_TILE_SEL;
             if (gb->last_tileset) {
@@ -1277,7 +1287,7 @@ object_buffer_pointer++\
         if (check_window && gb->io_registers[GB_IO_WX] == pixels + 7) {
 activate_window:
             check_window = false;
-            map = gb->io_registers[GB_IO_LCDC] & GB_LCDC_WIN_MAP? 0x1C00 : 0x1800;
+            map = (gb->io_registers[GB_IO_LCDC] & GB_LCDC_WIN_MAP)? 0x1C00 : 0x1800;
             tile_x = -1;
             y = ++gb->window_y;
             break;
@@ -1317,6 +1327,7 @@ static void render_line_sgb(GB_gameboy_t *gb)
     
     struct {
         unsigned pixel:2; // Color, 0-3
+        unsigned priority:6; // Object priority – 0 in DMG, OAM index in CGB
         unsigned palette:1; // Palette, 0 - 7 (CGB); 0-1 in DMG (or just 0 for BG)
         bool bg_priority:1; // BG priority bit
     } _object_buffer[160 + 16]; // allocate extra to avoid per pixel checks
@@ -1329,6 +1340,8 @@ static void render_line_sgb(GB_gameboy_t *gb)
         memset(_object_buffer, 0, sizeof(_object_buffer));
         
         while (gb->n_visible_objs) {
+            unsigned object_index = gb->visible_objs[gb->n_visible_objs - 1];
+            unsigned priority = (gb->object_priority == GB_OBJECT_PRIORITY_X)? 0 : object_index;
             const object_t *object = &objects[gb->visible_objs[gb->n_visible_objs - 1]];
             gb->n_visible_objs--;
             
@@ -1348,8 +1361,9 @@ static void render_line_sgb(GB_gameboy_t *gb)
                 unsigned pixel = (data0 >> 7) | ((data1 >> 7) << 1);
                 data0 <<= 1;
                 data1 <<= 1;
-                if (!p->pixel) {
+                if (pixel && (!p->pixel || priority < p->priority)) {
                     p->pixel = pixel;
+                    p->priority = priority;
                     p->palette = (object->flags & 0x10) >> 4;
                     p->bg_priority = object->flags & 0x80;
                 }
@@ -1418,7 +1432,7 @@ object_buffer_pointer++\
         if (check_window && gb->io_registers[GB_IO_WX] == pixels + 7) {
         activate_window:
             check_window = false;
-            map = gb->io_registers[GB_IO_LCDC] & GB_LCDC_WIN_MAP? 0x1C00 : 0x1800;
+            map = (gb->io_registers[GB_IO_LCDC] & GB_LCDC_WIN_MAP)? 0x1C00 : 0x1800;
             tile_x = -1;
             y = ++gb->window_y;
             break;
@@ -1631,6 +1645,8 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                 GB_SLEEP(gb, display, 1, LCDC_PERIOD - gb->cycles_since_vblank_callback);
             }
             update_frame_parity(gb); // TODO: test actual timing
+
+            retro_set_overclock(3);
             GB_display_vblank(gb, GB_VBLANK_TYPE_LCD_OFF);
         }
         return;
@@ -1931,11 +1947,21 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                 while (gb->n_visible_objs != 0 &&
                        (gb->io_registers[GB_IO_LCDC] & GB_LCDC_OBJ_EN || GB_is_cgb(gb)) &&
                        gb->objects_x[gb->n_visible_objs - 1] == x_for_object_match(gb)) {
+<<<<<<< HEAD
                     
                     while (gb->fetcher_state < GB_FETCHER_GET_TILE_DATA_HIGH_T2 || fifo_size(&gb->bg_fifo) == 0) {
+=======
+                    extern int retro_sprite_overclock;
+                    int oam_penalty;
+
+                    while (gb->fetcher_state < 5 || fifo_size(&gb->bg_fifo) == 0) {
+>>>>>>> 4878ec1 (Update apu.c)
                         advance_fetcher_state_machine(gb, &cycles);
-                        gb->cycles_for_line++;
-                        GB_SLEEP(gb, display, 27, 1);
+                        oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
+                        if (oam_penalty) {
+   						   gb->cycles_for_line++;
+                           GB_SLEEP(gb, display, 27, 1);
+                        }
                         if (gb->object_fetch_aborted) {
                             goto abort_fetching_object;
                         }
@@ -1943,8 +1969,11 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                     
                     /* TODO: Can this be deleted?  { */
                     advance_fetcher_state_machine(gb, &cycles);
-                    gb->cycles_for_line++;
-                    GB_SLEEP(gb, display, 41, 1);
+                    oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
+                    if (oam_penalty) {
+                        gb->cycles_for_line++;
+                        GB_SLEEP(gb, display, 41, 1);
+                    }
                     if (gb->object_fetch_aborted) {
                         goto abort_fetching_object;
                     }
@@ -1955,8 +1984,11 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                     gb->mode2_y_bus = oam_read(gb, gb->visible_objs[gb->n_visible_objs - 1] * 4 + 2);
                     gb->object_flags = oam_read(gb, gb->visible_objs[gb->n_visible_objs - 1] * 4 + 3);
                                         
-                    gb->cycles_for_line += 2;
-                    GB_SLEEP(gb, display, 20, 2);
+                    oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
+                    if (oam_penalty) {
+                        gb->cycles_for_line += 2;
+                        GB_SLEEP(gb, display, 20, 2);
+                    }
                     if (gb->object_fetch_aborted) {
                         goto abort_fetching_object;
                     }
@@ -1970,23 +2002,33 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                     gb->object_tile_data[0] = vram_read(gb, gb->object_low_line_address);
 
                     
-                    gb->cycles_for_line += 2;
-                    GB_SLEEP(gb, display, 39, 2);
+                    oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
+                    if (oam_penalty) {
+                        gb->cycles_for_line += 2;
+                        GB_SLEEP(gb, display, 39, 2);
+                    }
                     if (gb->object_fetch_aborted) {
                         goto abort_fetching_object;
                     }
                     
                     gb->during_object_fetch = false;
-                    gb->cycles_for_line++;
+                    oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
+                    if (oam_penalty) {
+                        gb->cycles_for_line++;
+                    }
                     gb->object_low_line_address = get_object_line_address(gb,
                                                                           gb->objects_y[gb->n_visible_objs - 1],
                                                                           gb->mode2_y_bus,
                                                                           gb->object_flags);
 
+                    /* TODO: timing not verified. Probably happens a cycle earlier, but needs to verify it doesn't
+                             break any DMA tests. { */
                     dma_sync(gb, &cycles);
                     gb->object_tile_data[1] = vram_read(gb, gb->object_low_line_address + 1);
-                    GB_SLEEP(gb, display, 40, 1);
-
+                    oam_penalty = (gb->n_visible_objs <= 10 && !retro_sprite_overclock) ? 1 : 0;
+                    if (oam_penalty) {
+                        GB_SLEEP(gb, display, 40, 1);
+                    }
                     
                     uint8_t palette = (gb->object_flags & 0x10) ? 1 : 0;
                     if (gb->cgb_mode) {
@@ -1997,7 +2039,7 @@ void GB_display_run(GB_gameboy_t *gb, unsigned cycles, bool force)
                                             gb->object_tile_data[1],
                                             palette,
                                             gb->object_flags & 0x80,
-                                            gb->object_priority == GB_OBJECT_PRIORITY_INDEX? gb->visible_objs[gb->n_visible_objs - 1] : 0,
+                                            (gb->object_priority == GB_OBJECT_PRIORITY_INDEX)? gb->visible_objs[gb->n_visible_objs - 1] : 0,
                                             gb->object_flags & 0x20);
 
                     gb->data_for_sel_glitch = gb->vram_ppu_blocked? 0xFF : gb->vram[gb->object_low_line_address + 1];
@@ -2112,6 +2154,11 @@ skip_slow_mode_3:
             }
             
             gb->cycles_for_line = 0;
+
+            if (gb->current_line == LINES - 1) {
+                retro_set_overclock(1);
+            }
+
             GB_SLEEP(gb, display, 31, 2);
             if (gb->current_line != LINES - 1) {
                 gb->mode_for_interrupt = 2;
@@ -2182,7 +2229,7 @@ skip_slow_mode_3:
             
             /* 3640 is just a few cycles less than 4 lines, no clue where the
                AGB constant comes from (These are measured and confirmed)  */
-            gb->frame_repeat_countdown = LINES * LINE_LENGTH * 2 + (gb->model > GB_MODEL_CGB_E? 5982 : 3640); // 8MHz units
+            gb->frame_repeat_countdown = LINES * LINE_LENGTH * 2 + ((gb->model > GB_MODEL_CGB_E)? 5982 : 3640); // 8MHz units
             if (gb->display_cycles < gb->frame_repeat_countdown) {
                 gb->frame_repeat_countdown -= gb->display_cycles;
             }
@@ -2226,6 +2273,7 @@ skip_slow_mode_3:
         if (gb->icd_vreset_callback) {
             gb->icd_vreset_callback(gb);
         }
+        retro_set_overclock(2);
     }
 }
 
@@ -2258,7 +2306,7 @@ void GB_draw_tileset(GB_gameboy_t *gb, uint32_t *dest, GB_palette_type_t palette
                 continue;
             }
             uint16_t tile = (x % 128) / 8 + y / 8 * 16;
-            uint16_t tile_address = tile * 0x10 + (x >= 128? 0x2000 : 0);
+            uint16_t tile_address = tile * 0x10 + ((x >= 128)? 0x2000 : 0);
             uint8_t pixel = (((gb->vram[tile_address + (y & 7) * 2    ] >> ((~x)&7)) & 1 ) |
                              ((gb->vram[tile_address + (y & 7) * 2 + 1] >> ((~x)&7)) & 1) << 1);
             
@@ -2268,7 +2316,7 @@ void GB_draw_tileset(GB_gameboy_t *gb, uint32_t *dest, GB_palette_type_t palette
                 }
                 else if (!gb->cgb_mode) {
                     if (palette_type == GB_PALETTE_OAM) {
-                        pixel = ((gb->io_registers[palette_index == 0? GB_IO_OBP0 : GB_IO_OBP1] >> (pixel << 1)) & 3);
+                        pixel = ((gb->io_registers[(palette_index == 0)? GB_IO_OBP0 : GB_IO_OBP1] >> (pixel << 1)) & 3);
                     }
                 }
             }
@@ -2370,7 +2418,7 @@ uint8_t GB_get_oam_info(GB_gameboy_t *gb, GB_oam_info_t *dest, uint8_t *object_h
                 oam_to_dest_index[i] = ++count;
                 info->x = object->x;
                 info->y = object->y;
-                info->tile = *object_height == 16? object->tile & 0xFE : object->tile;
+                info->tile = (*object_height == 16)? object->tile & 0xFE : object->tile;
                 info->flags = object->flags;
                 info->obscured_by_line_limit = false;
                 info->oam_addr = 0xFE00 + i * sizeof(*object);

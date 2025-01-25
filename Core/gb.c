@@ -1717,8 +1717,16 @@ static void GB_reset_internal(GB_gameboy_t *gb, bool quick)
         gb->ram_size = 0x2000;
         gb->vram_size = 0x2000;
         memset(gb->vram, 0, gb->vram_size);
+<<<<<<< HEAD
         gb->object_priority = GB_OBJECT_PRIORITY_X;        
         GB_update_dmg_palette(gb);
+=======
+
+        extern void set_retro_sprite_priority(GB_gameboy_t *gb);
+        set_retro_sprite_priority(gb);
+        
+        update_dmg_palette(gb);
+>>>>>>> fb561ba (Update apu.c)
     }
     
     gb->serial_mask = 0x80;

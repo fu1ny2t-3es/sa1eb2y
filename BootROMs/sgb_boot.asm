@@ -31,6 +31,7 @@ Start:
     ld a, %00_00_00_00
     ldh [rBGP], a
 
+IF !DEF(FAST)
 ; Load logo from ROM.
 ; A nibble represents a 4-pixels line, 2 bytes represent a 4x4 tile, scaled to 8x8.
 ; Tiles are ordered left to right, top to bottom.
@@ -72,6 +73,7 @@ Start:
     ld l, $0F ; Jump to top row
     jr .tilemapLoop
 .tilemapDone
+ENDC
 
     ; Turn on LCD
     ld a, LCDCF_ON | LCDCF_BLK01 | LCDCF_BGON
