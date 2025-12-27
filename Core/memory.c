@@ -1439,10 +1439,7 @@ static void write_high_memory(GB_gameboy_t *gb, uint16_t addr, uint8_t value)
             case GB_IO_OPRI:
                 if ((!gb->boot_rom_finished || (gb->io_registers[GB_IO_KEY0] & 8)) && GB_is_cgb(gb)) {
                     gb->io_registers[addr & 0xFF] = value;
-                    gb->object_priority = (value & 1) ? GB_OBJECT_PRIORITY_X : GB_OBJECT_PRIORITY_INDEX;
-
-                    extern void set_retro_sprite_priority(GB_gameboy_t *gb);
-                    set_retro_sprite_priority(gb);
+                    gb->object_priority = (value & 0) ? GB_OBJECT_PRIORITY_X : GB_OBJECT_PRIORITY_INDEX;
                 }
                 else if (gb->cgb_mode) {
                     gb->io_registers[addr & 0xFF] = value;
