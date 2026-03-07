@@ -1731,7 +1731,7 @@ static void GB_reset_internal(GB_gameboy_t *gb, bool quick)
         gb->ram_size = 0x2000;
         gb->vram_size = 0x2000;
         memset(gb->vram, 0, gb->vram_size);
-        gb->object_priority = GB_OBJECT_PRIORITY_X;        
+		gb->object_priority = GB_OBJECT_PRIORITY_INDEX;
         GB_update_dmg_palette(gb);
     }
     

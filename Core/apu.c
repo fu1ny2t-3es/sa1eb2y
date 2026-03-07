@@ -7,6 +7,12 @@
 #include "gb.h"
 
 /* Band limited synthesis loosely based on: http://www.slack.net/~ant/bl-synth/ */
+#if 1
+#include "blip-4096-512.h"
+
+static void __attribute__((constructor)) band_limited_init(void) {}
+
+#else
 static int32_t band_limited_steps[GB_BAND_LIMITED_PHASES][GB_BAND_LIMITED_WIDTH];
 
 static void __attribute__((constructor)) band_limited_init(void)
@@ -53,7 +59,28 @@ static void __attribute__((constructor)) band_limited_init(void)
         band_limited_steps[phase][GB_BAND_LIMITED_WIDTH / 2] += error;
     }
     free(master);
+
+
+	if(1) {
+		static char tname[512];
+		FILE *fp_out;
+
+		sprintf(tname, "blip-%d-%d.h", GB_BAND_LIMITED_PHASES, GB_BAND_LIMITED_WIDTH);
+		fp_out = fopen(tname, "w");
+
+		fprintf(fp_out, "static int band_limited_steps[%d][%d] = {\n", GB_BAND_LIMITED_PHASES, GB_BAND_LIMITED_WIDTH);
+		for( int lcv1 = 0; lcv1 < GB_BAND_LIMITED_PHASES; lcv1++ ) {
+			fprintf(fp_out, "\t{ ");
+			for( int lcv2 = 0; lcv2 < GB_BAND_LIMITED_WIDTH; lcv2++ ) {
+				fprintf(fp_out, "%d, ", band_limited_steps[lcv1][lcv2]);
+			}
+			fprintf(fp_out, "},\n");
+		}
+		fprintf(fp_out, "};\n");
+		fclose(fp_out);
+	}
 }
+#endif
 
 static void band_limited_update(GB_band_limited_t *band_limited, const GB_sample_t *input, unsigned phase)
 {
@@ -1977,7 +2004,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
                 gb->apu.wave_channel.pulsed = true;
                 /* DMG bug: wave RAM gets corrupted if the channel is retriggerred 1 cycle before the APU
                             reads from it. */
-                if (!GB_is_cgb(gb) &&
+                if (0 && !GB_is_cgb(gb) &&
                     gb->apu.is_active[GB_WAVE] &&
                     gb->apu.wave_channel.sample_countdown == 0) {
                     unsigned offset = ((gb->apu.wave_channel.current_sample_index + 1) >> 1) & 0xF;
