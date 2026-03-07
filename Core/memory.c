@@ -3,6 +3,8 @@
 #include <string.h>
 #include "gb.h"
 
+extern int retro_vram_blocking;
+
 typedef uint8_t read_function_t(GB_gameboy_t *gb, uint16_t addr);
 typedef void write_function_t(GB_gameboy_t *gb, uint16_t addr, uint8_t value);
 
@@ -304,7 +306,7 @@ static uint8_t read_vram(GB_gameboy_t *gb, uint16_t addr)
         }
     }
     
-    if (unlikely(gb->vram_read_blocked && !gb->in_dma_read)) {
+    if (unlikely(gb->vram_read_blocked && !gb->in_dma_read && retro_vram_blocking)) {
         return 0xFF;
     }
     if (unlikely(gb->display_state == 22)) {
@@ -1011,7 +1013,7 @@ static void write_mbc(GB_gameboy_t *gb, uint16_t addr, uint8_t value)
 static void write_vram(GB_gameboy_t *gb, uint16_t addr, uint8_t value)
 {
     GB_display_sync(gb);
-    if (unlikely(gb->vram_write_blocked)) {
+    if (unlikely(gb->vram_write_blocked && retro_vram_blocking)) {
         //GB_log(gb, "Wrote %02x to %04x (VRAM) during mode 3\n", value, addr);
         return;
     }
@@ -1438,6 +1440,9 @@ static void write_high_memory(GB_gameboy_t *gb, uint16_t addr, uint8_t value)
                 if ((!gb->boot_rom_finished || (gb->io_registers[GB_IO_KEY0] & 8)) && GB_is_cgb(gb)) {
                     gb->io_registers[addr & 0xFF] = value;
                     gb->object_priority = (value & 1) ? GB_OBJECT_PRIORITY_X : GB_OBJECT_PRIORITY_INDEX;
+
+                    extern void set_retro_sprite_priority(GB_gameboy_t *gb);
+                    set_retro_sprite_priority(gb);
                 }
                 else if (gb->cgb_mode) {
                     gb->io_registers[addr & 0xFF] = value;
@@ -1936,7 +1941,7 @@ void GB_hdma_run(GB_gameboy_t *gb)
             uint16_t addr = (gb->hdma_current_dest++ & 0x1FFF);
             gb->vram[vram_base + addr] = byte;
             // TODO: vram_write_blocked might not be the correct timing
-            if (gb->vram_write_blocked /* && (gb->model & ~GB_MODEL_GBP_BIT) < GB_MODEL_AGB_B */) {
+            if (gb->vram_write_blocked /* && (gb->model & ~GB_MODEL_GBP_BIT) < GB_MODEL_AGB_B */ && retro_vram_blocking) {
                 gb->vram[(vram_base ^ 0x2000) + addr] = byte;
             }
         }
@@ -1950,7 +1955,7 @@ void GB_hdma_run(GB_gameboy_t *gb)
                 uint16_t addr = (gb->hdma_current_dest & gb->addr_for_hdma_conflict & 0x1FFF);
                 gb->vram[vram_base + addr] = byte;
                 // TODO: vram_write_blocked might not be the correct timing
-                if (gb->vram_write_blocked /* && (gb->model & ~GB_MODEL_GBP_BIT) < GB_MODEL_AGB_B */) {
+                if (gb->vram_write_blocked /* && (gb->model & ~GB_MODEL_GBP_BIT) < GB_MODEL_AGB_B */ && retro_vram_blocking) {
                     gb->vram[(vram_base ^ 0x2000) + addr] = byte;
                 }
             }

@@ -11,6 +11,10 @@ typedef enum {
     GB_KEY_B,
     GB_KEY_SELECT,
     GB_KEY_START,
+    GB_KEY_R,
+    GB_KEY_L,
+    GB_KEY_X,
+    GB_KEY_Y,
     GB_KEY_MAX
 } GB_key_t;
 
@@ -23,6 +27,10 @@ typedef enum {
     GB_KEY_B_MASK = 1 << GB_KEY_B,
     GB_KEY_SELECT_MASK = 1 << GB_KEY_SELECT,
     GB_KEY_START_MASK = 1 << GB_KEY_START,
+    GB_KEY_R_MASK = 1 << GB_KEY_R,
+    GB_KEY_L_MASK = 1 << GB_KEY_L,
+    GB_KEY_X_MASK = 1 << GB_KEY_X,
+    GB_KEY_Y_MASK = 1 << GB_KEY_Y,
 } GB_key_mask_t;
 
 typedef void (*GB_update_input_hint_callback_t)(GB_gameboy_t *gb);

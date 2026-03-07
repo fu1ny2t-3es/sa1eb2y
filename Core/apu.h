@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include "defs.h"
 
-#define GB_BAND_LIMITED_WIDTH 64
-#define GB_BAND_LIMITED_PHASES 256
+#define GB_BAND_LIMITED_WIDTH 512
+#define GB_BAND_LIMITED_PHASES 4096
 
 #define GB_QUICK_MULTIPLY_COUNT 64
 
@@ -179,7 +179,7 @@ typedef struct {
     struct {
         int32_t left, right;
     } buffer[GB_BAND_LIMITED_WIDTH * 2], output;
-    uint8_t pos;
+    uint32_t pos;
     GB_sample_t input;
     GB_sample_t last_output;
     unsigned silence_detection;
