@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #define WIIU_SAMPLE_RATE 48000
-#define SAMPLE_RATE 768000  /* SameBoy filter better than frontend @ 2M */
+#define SAMPLE_RATE 384000  /* SameBoy filter better than frontend @ 2M */
 
 #ifdef _WIN32
 #include <direct.h>
