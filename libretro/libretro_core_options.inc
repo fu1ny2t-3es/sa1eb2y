@@ -115,22 +115,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         },
         "Super Game Boy"
     },
-    {
-<<<<<<< HEAD
-=======
-        "sameboy_rtc",
-        "System - Real Time Clock Emulation",
-        "Real Time Clock Emulation",
-        "Specifies how the emulation of the real-time clock feature used in certain Game Boy and Game Boy Color games should function.",
-        NULL,
-        "system",
-        {
-            { "sync to system clock", "Sync to System Clock" },
-            { "accurate",             "Accurate"             },
-            { NULL, NULL },
-        },
-        "sync to system clock"
-    },
      {
          "sameboy_video_overclock_type",
          "System - CPU Overclock Mode",
@@ -174,7 +158,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          "1"
      },
      {
->>>>>>> 4bf7487 (Update Makefile)
         "sameboy_mono_palette",
         "Video - GB Mono Palette",
         "GB Mono Palette",
