@@ -11,7 +11,7 @@ Core
 Libretro
  - Audio volume level
  - SGB border cropping
- - 768K audio rate  [internal Blackman filter]
+ - 384K audio rate  [internal Blackman filter]
  
  
 Compiler
