@@ -1,0 +1,18 @@
+Core
+ - Gamma 2.35
+ - CPU overclock
+ - DMG wave corruption remove
+ - Sprite sorting priority
+ - Sprite limit remove
+ - VRAM outside VBlank
+ - Sprite overclock
+ 
+ 
+Libretro
+ - Audio volume level
+ - SGB border cropping
+ - 768K audio rate  [internal Blackman filter]
+ 
+ 
+Compiler
+ - Optimization flag  [O3]
