@@ -125,7 +125,9 @@ void GB_update_joyp(GB_gameboy_t *gb)
 
         case 0:
             for (uint8_t i = 0; i < 4; i++) {
-                gb->io_registers[GB_IO_JOYP] |= (!(get_input(gb, current_player, i) || get_input(gb, current_player, i + 4))) << i;
+				// snes joypad hack
+                gb->io_registers[GB_IO_JOYP] |= (!get_input(gb, current_player, i + 8)) << i;
+                //gb->io_registers[GB_IO_JOYP] |= (!(get_input(gb, current_player, i) || get_input(gb, current_player, i + 4))) << i;
             }
             break;
 
@@ -139,8 +141,11 @@ void GB_update_joyp(GB_gameboy_t *gb)
             gb->io_registers[GB_IO_IF] |= 0x10;
         }
     }
-    
-    gb->io_registers[GB_IO_JOYP] |= 0xC0;
+
+	if (key_selection == 0)
+		gb->io_registers[GB_IO_JOYP] |= 0x00;  // snes joypad hack
+	else
+		gb->io_registers[GB_IO_JOYP] |= 0xC0;
 }
 
 void GB_icd_set_joyp(GB_gameboy_t *gb, uint8_t value)

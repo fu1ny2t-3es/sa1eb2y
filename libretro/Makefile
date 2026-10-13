@@ -343,7 +343,7 @@ LDFLAGS += $(LIBM)
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g
 else
-   CFLAGS += -O2 -DNDEBUG
+   CFLAGS += -O3 -DNDEBUG -march=native
 endif
 
 include Makefile.common
@@ -384,6 +384,7 @@ else
 endif
 	echo "};" >> $@
 	echo "const unsigned $(notdir $(@:%.c=%))_length = sizeof($(notdir $(@:%.c=%)));" >> $@
+	cp $@ $(CORE_DIR)
 
 $(abspath $(CORE_DIR))/build/bin/BootROMs/%_boot.bin:
 	$(MAKE) -C $(CORE_DIR) $@
